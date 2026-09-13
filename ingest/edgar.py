@@ -27,7 +27,11 @@ ATOM_NS = "{http://www.w3.org/2005/Atom}"
 
 
 def _user_agent() -> str:
-    return os.environ.get("INSIDER_WATCH_CONTACT", "InsiderClusterWatch hackathon-demo@example.com")
+    # os.environ.get's default only applies when the key is absent -- an
+    # empty string (e.g. an unset GitHub Actions repo variable still gets
+    # passed through as "") would otherwise slip past it and get this
+    # request rejected by SEC with a 403.
+    return os.environ.get("INSIDER_WATCH_CONTACT") or "InsiderClusterWatch hackathon-demo@example.com"
 
 
 def _get(url: str, session: requests.Session) -> requests.Response:
