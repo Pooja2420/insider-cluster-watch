@@ -38,6 +38,7 @@ from connectors.slack import SlackConnector
 from connectors.discord import DiscordConnector
 from connectors.sheets import SheetsConnector
 from connectors.gmail import GmailConnector
+from reporting.report import write_html_report
 
 DISCLAIMER = "Public-disclosure signal only. Not investment advice. No trades are placed by this tool."
 DIGEST_RECIPIENT = "pooja.vb2000@gmail.com"
@@ -118,6 +119,15 @@ def run_monitoring_cycle(max_filings: int = 60):
         ))
     else:
         print("[gmail] no high-severity clusters — no digest drafted")
+
+    report_path = write_html_report(
+        path="insider_watch_output/report.html",
+        raw_transactions=raw_transactions,
+        purchases=purchases,
+        clusters=clusters,
+        audit=audit,
+    )
+    print(f"\n[report] human-readable summary written to {report_path} — open it in a browser")
 
 
 if __name__ == "__main__":
