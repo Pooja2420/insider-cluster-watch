@@ -29,6 +29,8 @@ Run: python main.py
 from __future__ import annotations
 
 import json
+import os
+import webbrowser
 from datetime import datetime, timezone
 
 from ingest.edgar import fetch_recent_transactions
@@ -127,7 +129,15 @@ def run_monitoring_cycle(max_filings: int = 60):
         clusters=clusters,
         audit=audit,
     )
-    print(f"\n[report] human-readable summary written to {report_path} — open it in a browser")
+    print(f"\n[report] human-readable summary written to {report_path}")
+
+    # Auto-open for local/demo runs only -- skip in CI (no display, would
+    # just hang or error) and let INSIDER_WATCH_NO_BROWSER opt out locally too.
+    if "GITHUB_ACTIONS" not in os.environ and "INSIDER_WATCH_NO_BROWSER" not in os.environ:
+        try:
+            webbrowser.open(f"file://{os.path.abspath(report_path)}")
+        except Exception as e:
+            print(f"[report] could not auto-open browser: {e}")
 
 
 if __name__ == "__main__":
