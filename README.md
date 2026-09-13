@@ -100,6 +100,10 @@ runs, add the env vars from the table above as repo secrets under
 **Settings → Secrets and variables → Actions**; each run's output is also
 uploaded as a downloadable artifact from the Actions tab.
 
+For this submission, the external cron is live and running every 15
+minutes against the real SEC EDGAR feed, posting live to Slack and Discord
+on every cycle.
+
 ## Pipeline
 
 1. **Ingest** (`ingest/edgar.py`): pulls the live SEC EDGAR Form 4 feed
