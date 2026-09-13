@@ -2,6 +2,10 @@
 
 Built for the Multi-App AI Agent Hackathon (Sep 13, 2026).
 
+**Team:**
+- Pooja Venugopal Baskaran ([pooja.vb2000@gmail.com](mailto:pooja.vb2000@gmail.com))
+- Madhavan Panneerselvam Kumar ([pkmadhavan9802@gmail.com](mailto:pkmadhavan9802@gmail.com))
+
 **Demo video (2 min):** ADD_YOUR_LINK_HERE
 
 ---
