@@ -36,13 +36,12 @@ and it never places one. Every escalation says so explicitly.
 | **Slack** | Real-time alert the moment a cluster is detected | Live (Incoming Webhook) |
 | **Discord** | Mirrors the same real-time alert to a second audience | Live (channel Webhook) |
 | **Gmail** | Drafts (never auto-sends) a digest for high-severity clusters, held for human review | Live (Gmail API, `gmail.compose` scope) |
-| **Google Sheets** | Full audit log of every flagged cluster | Mock mode (documented live path below, not connected for this submission) |
 
 Slack and Discord both use plain incoming webhooks, no OAuth or bot setup
-required. All four connectors run in a documented mock mode by default
-(writing to local files under `insider_watch_output/`), so the repo is
-fully runnable with zero credentials, and each one swaps to its live API
-through a single environment variable. See below.
+required. All connectors run in a documented mock mode by default (writing
+to local files under `insider_watch_output/`), so the repo is fully
+runnable with zero credentials, and each one swaps to its live API through
+a single environment variable. See below.
 
 ## Setup instructions
 
@@ -64,7 +63,6 @@ variable before running:
 |---|---|---|
 | Slack | `INSIDER_WATCH_SLACK_WEBHOOK` (Incoming Webhook URL) | none |
 | Discord | `INSIDER_WATCH_DISCORD_WEBHOOK` (channel Webhook URL) | none |
-| Google Sheets | `INSIDER_WATCH_GOOGLE_CREDS` + `INSIDER_WATCH_SHEET_ID` | `pip install gspread google-auth` |
 | Gmail | `INSIDER_WATCH_GMAIL_TOKEN` (OAuth token path) | `pip install google-api-python-client google-auth-oauthlib` |
 
 Also set `INSIDER_WATCH_CONTACT` to `"Your Name your@email.com"`. SEC asks
