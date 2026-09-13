@@ -1,0 +1,56 @@
+name: Insider Cluster Watch monitoring run
+
+on:
+  # GitHub's native schedule trigger is best-effort and can be delayed or
+  # silently skipped for hours, especially on freshly-created workflows and
+  # public repos during high load. Kept here as a free backup, but the
+  # PRIMARY trigger for reliable 15-minute runs is an external cron service
+  # (e.g. cron-job.org) calling this workflow's `workflow_dispatch` via the
+  # GitHub API — see README.md for setup.
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch: {}   # what the external cron (and the Actions tab) triggers
+
+jobs:
+  run-insider-cluster-watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run Insider Cluster Watch
+        env:
+          # Identify this app to SEC EDGAR (required — see README)
+          INSIDER_WATCH_CONTACT: ${{ vars.INSIDER_WATCH_CONTACT }}
+          # Set these as repo secrets (Settings -> Secrets and variables ->
+          # Actions) to post to real apps instead of mock mode. Any that
+          # aren't set are simply left unset here and the connectors fall
+          # back to mock mode automatically — no code changes needed.
+          INSIDER_WATCH_SLACK_WEBHOOK: ${{ secrets.INSIDER_WATCH_SLACK_WEBHOOK }}
+          INSIDER_WATCH_DISCORD_WEBHOOK: ${{ secrets.INSIDER_WATCH_DISCORD_WEBHOOK }}
+          INSIDER_WATCH_GOOGLE_CREDS: ${{ secrets.INSIDER_WATCH_GOOGLE_CREDS }}
+          INSIDER_WATCH_SHEET_ID: ${{ secrets.INSIDER_WATCH_SHEET_ID }}
+          INSIDER_WATCH_GMAIL_TOKEN: ${{ secrets.INSIDER_WATCH_GMAIL_TOKEN }}
+        run: python main.py
+
+      - name: Upload run output as an artifact
+        # Keeps every run's audit CSV / Slack log / Discord log / Gmail
+        # draft downloadable from the Actions tab, since mock-mode output
+        # isn't sent anywhere and would otherwise be lost when the runner
+        # shuts down.
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: insider-cluster-watch-output-${{ github.run_id }}
+          path: insider_watch_output/
+          retention-days: 14
