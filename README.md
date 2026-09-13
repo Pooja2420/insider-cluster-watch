@@ -27,17 +27,18 @@ and it never places one — every escalation says so explicitly.
 
 ## External apps used
 
-| App | What it's used for |
-|---|---|
-| **Slack** | Real-time alert the moment a cluster is detected |
-| **Discord** | Mirrors the same real-time alert to a second audience |
-| **Google Sheets** | Full audit log of every flagged cluster |
-| **Gmail** | Drafts (never auto-sends) a digest for high-severity clusters, held for human review |
+| App | What it's used for | Status |
+|---|---|---|
+| **Slack** | Real-time alert the moment a cluster is detected | ✅ Live (Incoming Webhook) |
+| **Discord** | Mirrors the same real-time alert to a second audience | ✅ Live (channel Webhook) |
+| **Gmail** | Drafts (never auto-sends) a digest for high-severity clusters, held for human review | ✅ Live (Gmail API, `gmail.compose` scope) |
+| **Google Sheets** | Full audit log of every flagged cluster | Mock mode (documented live path below, not connected for this submission) |
 
 Slack and Discord both use plain incoming webhooks — no OAuth or bot setup
 required. All four connectors run in a documented mock mode by default
-(mock mode writes to local files under `insider_watch_output/`) and each
-swaps to its live API via a single environment variable — see below.
+(mock mode writes to local files under `insider_watch_output/`) so the repo
+is fully runnable with zero credentials, and each swaps to its live API via
+a single environment variable — see below.
 
 ## Setup instructions
 
@@ -66,6 +67,35 @@ Also set `INSIDER_WATCH_CONTACT` to `"Your Name your@email.com"` — SEC asks
 every caller of its public feed to self-identify with a real contact in the
 User-Agent string.
 
+### Gmail live setup (one-time)
+
+Gmail drafting needs a one-time OAuth authorization since it uses the real
+Gmail API rather than a webhook:
+
+1. Create a Google Cloud project → enable the **Gmail API**
+2. Configure the OAuth consent screen (External, add yourself as a test
+   user) and create an **OAuth client ID** (Application type: Desktop app)
+   → download the JSON as `credentials/client_secret.json`
+3. `pip install google-api-python-client google-auth-oauthlib`
+4. `python scripts/gmail_auth.py` — opens your browser once for you to sign
+   in and click Allow, then saves `credentials/token.json`
+5. `export INSIDER_WATCH_GMAIL_TOKEN=credentials/token.json`
+
+The script only requests the `gmail.compose` scope — enough to create
+drafts, not to read or send mail outright. `credentials/` is gitignored.
+
+### Automated runs (GitHub Actions)
+
+`.github/workflows/insider-cluster-watch.yml` runs `main.py` on a schedule.
+GitHub's native `schedule:` trigger is best-effort and can be delayed or
+silently skipped for hours on freshly-created workflows, so the reliable
+15-minute cadence is driven by an **external cron** (e.g. cron-job.org)
+calling the workflow's `workflow_dispatch` endpoint via the GitHub API —
+`schedule:` is kept as a free backup. To connect real apps in the
+scheduled runs, add the env vars from the table above as repo secrets
+under **Settings → Secrets and variables → Actions**; each run's output is
+also uploaded as a downloadable artifact from the Actions tab.
+
 ## Pipeline
 
 1. **Ingest** (`ingest/edgar.py`) — pulls the live SEC EDGAR Form 4 feed
@@ -83,6 +113,10 @@ User-Agent string.
    recomputes clusters from the raw transaction log and diffs against the
    live output before anything escalates.
 4. **Escalate** (`connectors/`) — see "External apps used" above.
+5. **Report** (`reporting/report.py`) — writes a clean, human-readable HTML
+   summary to `insider_watch_output/report.html` after every run (stat
+   tiles, a severity-coded cluster table, and the reliability figure) —
+   open it in any browser instead of reading terminal output.
 
 ## How we tested reliability
 
@@ -122,5 +156,11 @@ insider_cluster_watch/
     audit.py           independent classification recompute + diff
   connectors/
     slack.py, discord.py, sheets.py, gmail.py    mock-mode by default, env-var swap to live
+  reporting/
+    report.py           human-readable HTML run summary
+  scripts/
+    gmail_auth.py        one-time local OAuth flow for the Gmail connector
+  .github/workflows/
+    insider-cluster-watch.yml    scheduled run (workflow_dispatch + backup schedule)
   main.py               orchestrator — the monitoring run
 ```

@@ -1,3 +1,5 @@
 insider_watch_output/
 __pycache__/
 *.pyc
+credentials/
+token.json
