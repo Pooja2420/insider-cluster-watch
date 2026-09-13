@@ -28,6 +28,14 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Write Gmail token file
+        # The Gmail connector needs a FILE PATH (Credentials.from_authorized_user_file),
+        # but GitHub secrets only hold strings -- so the secret holds the
+        # token JSON's contents, and this step writes it to disk for the
+        # run below. Safe to run even if the secret is unset (empty file);
+        # the connector gracefully falls back to mock mode on any failure.
+        run: echo '${{ secrets.INSIDER_WATCH_GMAIL_TOKEN_JSON }}' > gmail_token.json
+
       - name: Run Insider Cluster Watch
         env:
           # Identify this app to SEC EDGAR (required — see README)
@@ -40,7 +48,7 @@ jobs:
           INSIDER_WATCH_DISCORD_WEBHOOK: ${{ secrets.INSIDER_WATCH_DISCORD_WEBHOOK }}
           INSIDER_WATCH_GOOGLE_CREDS: ${{ secrets.INSIDER_WATCH_GOOGLE_CREDS }}
           INSIDER_WATCH_SHEET_ID: ${{ secrets.INSIDER_WATCH_SHEET_ID }}
-          INSIDER_WATCH_GMAIL_TOKEN: ${{ secrets.INSIDER_WATCH_GMAIL_TOKEN }}
+          INSIDER_WATCH_GMAIL_TOKEN: gmail_token.json
         run: python main.py
 
       - name: Upload run output as an artifact

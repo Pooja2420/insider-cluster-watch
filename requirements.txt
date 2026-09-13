@@ -1,3 +1,5 @@
 pandas
 numpy
 requests
+google-api-python-client
+google-auth-oauthlib
